@@ -314,7 +314,7 @@
         pinned: $("pinInput").checked
       });
       msg.className = "msg ok"; msg.textContent = "요청을 보냈습니다. 목록을 확인하는 중…";
-      $("titleInput").value = ""; $("contentInput").value = ""; $("pinInput").checked = false; $("dateInput").value = "";
+      $("titleInput").value = ""; $("contentInput").value = ""; $("pinInput").checked = false; $("dateInput").value = todayStr();
       submitBtn.disabled = false; submitBtn.textContent = "공지 등록";
       await new Promise(r => setTimeout(r, 1300));
       const before = $("countLabel").textContent;
@@ -333,11 +333,18 @@
     submitBtn.disabled = false; submitBtn.textContent = "공지 등록";
   });
 
+  function todayStr(){
+    const d = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate());
+  }
+
   function enterApp(){
     $("gateCard").hidden = true;
     $("appArea").hidden = false;
     $("endpointInput").value = ENDPOINT;
     if(!ENDPOINT) $("setupBox").open = true;
+    if(!$("dateInput").value) $("dateInput").value = todayStr();
     loadList();
   }
 
