@@ -94,7 +94,7 @@
 <div class="wrap">
   <header class="top">
     <h1>공지사항 관리자</h1>
-    <div class="site">아인소닉 <b>www.ainsonic.com</b> 공지사항</div>
+    <div class="site">아인소닉 <b>www.ainsonic.com</b> 공지사항 · <a href="#" id="logoutLink" style="color:inherit; text-decoration:underline">다시 로그인</a></div>
   </header>
 
   <div class="card" id="gateCard">
@@ -342,6 +342,15 @@
   }
 
   $("refreshBtn").addEventListener("click", loadList);
+
+  $("logoutLink").addEventListener("click", (e) => {
+    e.preventDefault();
+    PASS = ""; store.set("nd_pass", "");
+    $("passInput").value = "";
+    $("appArea").hidden = true;
+    $("gateCard").hidden = false;
+    $("passInput").focus();
+  });
 
   if(PASS){ $("passInput").value = PASS; enterApp(); }
 })();
