@@ -1,0 +1,319 @@
+<title>공지 관리자</title>
+<style>
+  :root{
+    --navy:#102A4D; --navy-2:#1B3A63; --teal:#11ADAC; --teal-2:#0C8887;
+    --bg:#F3F5F8; --panel:#FFFFFF; --line:#DFE4EC; --ink:#122132; --sub:#5B6B80;
+    --warn:#C0392B; --warn-bg:#FBEAE8; --ok-bg:#E9F7F3; --ok:#0C8887;
+    --pin-bg:#FFF3D6; --pin:#8A6300;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0B1420; --panel:#121D2C; --line:#243349; --ink:#E7ECF3; --sub:#8FA0B8;
+      --navy:#4E7BB8; --navy-2:#6E97CC; --teal:#2FD2CF; --teal-2:#5FE3E0;
+      --warn:#FF7A6E; --warn-bg:#2A1414; --ok-bg:#0F2620; --ok:#4FE3D8;
+      --pin-bg:#332405; --pin:#E3B450;
+      color-scheme:dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0B1420; --panel:#121D2C; --line:#243349; --ink:#E7ECF3; --sub:#8FA0B8;
+    --navy:#4E7BB8; --navy-2:#6E97CC; --teal:#2FD2CF; --teal-2:#5FE3E0;
+    --warn:#FF7A6E; --warn-bg:#2A1414; --ok-bg:#0F2620; --ok:#4FE3D8;
+    --pin-bg:#332405; --pin:#E3B450;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"IBM Plex Sans KR","Pretendard",-apple-system,"Malgun Gothic",sans-serif;
+    padding-inline:16px; padding-block:24px 48px;
+    word-break:keep-all; overflow-wrap:break-word;
+  }
+  .mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+  .wrap{max-width:720px; margin:0 auto; display:flex; flex-direction:column; gap:16px}
+
+  header.top{display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap}
+  header.top h1{font-size:1.35rem; margin:0; letter-spacing:-.01em}
+  header.top .site{font-size:.8rem; color:var(--sub)}
+  header.top .site b{color:var(--teal-2); font-weight:600}
+
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px}
+  .card h2{font-size:.95rem; margin:0 0 12px; color:var(--sub); font-weight:600; letter-spacing:.02em}
+
+  label{display:block; font-size:.82rem; color:var(--sub); margin-bottom:5px}
+  input[type=text], input[type=password], input[type=date], textarea{
+    width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:9px;
+    background:transparent; color:var(--ink); font-size:.92rem; font-family:inherit;
+  }
+  textarea{resize:vertical; min-height:76px}
+  input:focus, textarea:focus{outline:2px solid var(--teal); outline-offset:1px}
+  .row{display:flex; flex-direction:column; gap:5px; margin-bottom:12px}
+  .row.two{flex-direction:row; gap:12px}
+  .row.two > div{flex:1; min-width:0}
+
+  .chk{display:flex; align-items:center; gap:8px; font-size:.88rem; color:var(--ink); margin-bottom:14px}
+  .chk input{width:16px; height:16px; accent-color:var(--teal)}
+
+  button{
+    font-family:inherit; font-size:.9rem; font-weight:600; border-radius:9px; border:none;
+    padding:10px 16px; cursor:pointer; transition:opacity .15s;
+  }
+  button:hover{opacity:.85}
+  button:disabled{opacity:.5; cursor:not-allowed}
+  .btn-primary{background:var(--teal); color:#04211F}
+  .btn-ghost{background:transparent; border:1px solid var(--line); color:var(--ink)}
+  .btn-danger{background:var(--warn-bg); color:var(--warn)}
+  .btn-sm{padding:6px 11px; font-size:.78rem}
+
+  .msg{font-size:.85rem; padding:9px 12px; border-radius:8px; display:none}
+  .msg.ok{display:block; background:var(--ok-bg); color:var(--ok)}
+  .msg.err{display:block; background:var(--warn-bg); color:var(--warn)}
+
+  .gate{display:flex; gap:8px}
+  .gate input{flex:1}
+
+  .list{display:flex; flex-direction:column; gap:10px}
+  .item{border:1px solid var(--line); border-radius:10px; padding:12px 14px; display:flex; flex-direction:column; gap:6px}
+  .item .head{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+  .item .head .date{font-size:.76rem; color:var(--sub)}
+  .item .head .pin{font-size:.68rem; background:var(--pin-bg); color:var(--pin); padding:2px 7px; border-radius:99px; font-weight:600; letter-spacing:.02em}
+  .item .title{font-weight:600; font-size:.95rem}
+  .item .content{font-size:.85rem; color:var(--sub); white-space:pre-wrap}
+  .item .actions{display:flex; gap:8px; margin-top:2px}
+  .empty{color:var(--sub); font-size:.85rem; padding:8px 2px}
+  .loading{color:var(--sub); font-size:.85rem; padding:8px 2px}
+
+  details.setup summary{cursor:pointer; font-size:.8rem; color:var(--sub); list-style:none}
+  details.setup summary::-webkit-details-marker{display:none}
+  details.setup summary::before{content:"⚙ "}
+  details.setup[open] summary{margin-bottom:12px}
+  .hint{font-size:.76rem; color:var(--sub); margin-top:4px}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1>공지사항 관리자</h1>
+    <div class="site">아인소닉 <b>www.ainsonic.com</b> 공지사항</div>
+  </header>
+
+  <div class="card" id="gateCard">
+    <h2>접속</h2>
+    <div class="gate">
+      <input type="password" id="passInput" placeholder="암호 입력">
+      <button class="btn-primary" id="passBtn">확인</button>
+    </div>
+    <p class="hint">Apps Script에 설정한 암호와 같은 값을 입력하세요.</p>
+  </div>
+
+  <div id="appArea" hidden style="display:flex; flex-direction:column; gap:16px">
+
+    <div class="card">
+      <details class="setup" id="setupBox">
+        <summary>연결 주소 설정</summary>
+        <div class="row">
+          <label for="endpointInput">Apps Script 웹 앱 URL</label>
+          <input type="text" id="endpointInput" placeholder="https://script.google.com/macros/s/.../exec">
+        </div>
+        <button class="btn-ghost btn-sm" id="saveEndpointBtn">저장</button>
+        <p class="hint">공지사항 시트의 Apps Script를 배포하면 나오는 웹 앱 URL을 여기에 붙여넣으세요. 이 값은 이 브라우저에만 저장됩니다.</p>
+      </details>
+    </div>
+
+    <div class="card">
+      <h2>새 공지 작성</h2>
+      <form id="addForm">
+        <div class="row two">
+          <div>
+            <label for="dateInput">날짜</label>
+            <input type="date" id="dateInput">
+          </div>
+          <div style="flex:0 0 auto; display:flex; align-items:flex-end; padding-bottom:10px">
+            <span class="chk" style="margin:0"><input type="checkbox" id="pinInput"> 상단 고정</span>
+          </div>
+        </div>
+        <div class="row">
+          <label for="titleInput">제목</label>
+          <input type="text" id="titleInput" placeholder="예: 온라인 견적 신청 서비스를 시작했습니다" required>
+        </div>
+        <div class="row">
+          <label for="contentInput">내용</label>
+          <textarea id="contentInput" placeholder="공지 상세 내용 (선택)"></textarea>
+        </div>
+        <button class="btn-primary" type="submit" id="submitBtn">공지 등록</button>
+        <div class="msg" id="addMsg"></div>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>등록된 공지 (<span id="countLabel">-</span>)</h2>
+      <div class="list" id="list"><div class="loading">불러오는 중…</div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const NOTICE_SHEET_ID = "1bWOoTYp77Ig1ERvC_EoZtMEANtLIKTBsNg-QT80gKfg";
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/" + NOTICE_SHEET_ID + "/gviz/tq?tqx=out:csv";
+
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k){ try{ return localStorage.getItem(k) || ""; }catch(e){ return ""; } },
+    set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  };
+
+  let PASS = store.get("nd_pass");
+  let ENDPOINT = store.get("nd_endpoint");
+
+  function parseCSV(t){
+    const rows=[]; let row=[]; let field=""; let inQ=false;
+    for(let i=0;i<t.length;i++){
+      const c=t[i];
+      if(inQ){
+        if(c==='"'){ if(t[i+1]==='"'){field+='"'; i++;} else inQ=false; }
+        else field+=c;
+      } else {
+        if(c==='"') inQ=true;
+        else if(c===','){ row.push(field); field=""; }
+        else if(c==='\n'){ row.push(field); rows.push(row); row=[]; field=""; }
+        else if(c==='\r'){}
+        else field+=c;
+      }
+    }
+    if(field.length||row.length){ row.push(field); rows.push(row); }
+    return rows;
+  }
+
+  function esc(s){
+    return String(s==null?"":s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+
+  async function loadList(){
+    const list = $("list");
+    list.innerHTML = '<div class="loading">불러오는 중…</div>';
+    try{
+      const res = await fetch(CSV_URL + "&_=" + Date.now());
+      if(!res.ok) throw new Error("csv_fetch_failed");
+      const text = await res.text();
+      const rows = parseCSV(text).slice(1).filter(r => r.some(c => c && c.trim()));
+      $("countLabel").textContent = rows.length;
+      if(!rows.length){ list.innerHTML = '<div class="empty">등록된 공지가 없습니다.</div>'; return; }
+
+      list.innerHTML = "";
+      rows.forEach((r, idx) => {
+        const [date, title, content, pinned] = r;
+        const rowIndex = idx + 2; // 시트에서의 실제 행 번호 (1행=헤더)
+        const el = document.createElement("div");
+        el.className = "item";
+        el.innerHTML =
+          '<div class="head">' +
+            (pinned && pinned.trim().toUpperCase()==="Y" ? '<span class="pin">상단고정</span>' : '') +
+            '<span class="date mono">' + esc(date) + '</span>' +
+          '</div>' +
+          '<div class="title">' + esc(title) + '</div>' +
+          (content ? '<div class="content">' + esc(content) + '</div>' : '') +
+          '<div class="actions"><button class="btn-danger btn-sm" data-row="' + rowIndex + '">삭제</button></div>';
+        list.appendChild(el);
+      });
+
+      list.querySelectorAll("button[data-row]").forEach(btn => {
+        btn.addEventListener("click", () => onDelete(btn));
+      });
+    }catch(err){
+      list.innerHTML = '<div class="empty">목록을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</div>';
+    }
+  }
+
+  async function callEndpoint(payload){
+    if(!ENDPOINT){ throw new Error("no_endpoint"); }
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(Object.assign({ passcode: PASS }, payload))
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || "unknown");
+    return data;
+  }
+
+  async function onDelete(btn){
+    const rowIndex = btn.getAttribute("data-row");
+    const item = btn.closest(".item");
+    const titleText = item.querySelector(".title").textContent;
+    btn.textContent = "다시 클릭하면 삭제";
+    if(btn.dataset.armed !== "1"){
+      btn.dataset.armed = "1";
+      setTimeout(() => { btn.dataset.armed = "0"; btn.textContent = "삭제"; }, 3000);
+      return;
+    }
+    btn.disabled = true; btn.textContent = "삭제 중…";
+    try{
+      await callEndpoint({ action: "delete", rowIndex: rowIndex });
+      loadList();
+    }catch(err){
+      btn.disabled = false; btn.textContent = "삭제";
+      alert("삭제에 실패했습니다: " + titleText);
+    }
+  }
+
+  $("passBtn").addEventListener("click", () => {
+    const v = $("passInput").value.trim();
+    if(!v) return;
+    PASS = v; store.set("nd_pass", v);
+    enterApp();
+  });
+  $("passInput").addEventListener("keydown", e => { if(e.key === "Enter") $("passBtn").click(); });
+
+  $("saveEndpointBtn").addEventListener("click", () => {
+    const v = $("endpointInput").value.trim();
+    ENDPOINT = v; store.set("nd_endpoint", v);
+    $("setupBox").open = false;
+  });
+
+  $("addForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const msg = $("addMsg"); msg.className = "msg"; msg.textContent = "";
+    const submitBtn = $("submitBtn");
+    const title = $("titleInput").value.trim();
+    if(!title){ return; }
+    if(!ENDPOINT){
+      msg.className = "msg err"; msg.textContent = "먼저 위쪽 '연결 주소 설정'에서 웹 앱 URL을 입력해 주세요.";
+      $("setupBox").open = true;
+      return;
+    }
+    submitBtn.disabled = true; submitBtn.textContent = "등록 중…";
+    try{
+      await callEndpoint({
+        action: "add",
+        date: $("dateInput").value,
+        title: title,
+        content: $("contentInput").value.trim(),
+        pinned: $("pinInput").checked
+      });
+      msg.className = "msg ok"; msg.textContent = "공지가 등록되었습니다.";
+      $("titleInput").value = ""; $("contentInput").value = ""; $("pinInput").checked = false; $("dateInput").value = "";
+      loadList();
+    }catch(err){
+      const authFail = String(err.message||"") === "auth";
+      msg.className = "msg err";
+      msg.textContent = authFail ? "암호가 올바르지 않습니다. 다시 로그인해 주세요." : "등록에 실패했습니다. 연결 주소를 확인해 주세요.";
+    }finally{
+      submitBtn.disabled = false; submitBtn.textContent = "공지 등록";
+    }
+  });
+
+  function enterApp(){
+    $("gateCard").hidden = true;
+    $("appArea").hidden = false;
+    $("endpointInput").value = ENDPOINT;
+    if(!ENDPOINT) $("setupBox").open = true;
+    loadList();
+  }
+
+  if(PASS){ $("passInput").value = PASS; enterApp(); }
+})();
+</script>
